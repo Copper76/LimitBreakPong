@@ -9,9 +9,5 @@ void APVPGameMode::BeginPlay()
 {
     Super::BeginPlay();
 
-    ACameraActor* sharedCamera = Cast<ACameraActor>(UGameplayStatics::GetActorOfClass(GetWorld(), ACameraActor::StaticClass()));
-    APlayerCameraManager* cameraManager = Cast<APlayerCameraManager>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerCameraManager::StaticClass()));
-
-    cameraManager->SetActorLocation(sharedCamera->GetActorLocation());
-    cameraManager->SetActorRotation(sharedCamera->GetActorRotation());
+    GetGameInstance()->GetGameViewportClient()->SetDisableSplitscreenOverride(true);
 }

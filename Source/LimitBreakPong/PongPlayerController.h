@@ -16,5 +16,4 @@ class LIMITBREAKPONG_API APongPlayerController final : public APlayerController
 
 private:
 	virtual void BeginPlay() override;
-	
 };

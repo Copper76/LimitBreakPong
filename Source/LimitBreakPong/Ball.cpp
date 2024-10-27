@@ -2,6 +2,7 @@
 
 
 #include "Ball.h"
+#include "PongGameState.h"
 
 // Sets default values
 ABall::ABall()
@@ -12,6 +13,7 @@ ABall::ABall()
 	m_Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Ball Mesh"));
 	m_Mesh->SetEnableGravity(false);
 	m_Mesh->CastShadow = false;
+	m_Mesh->SetSimulatePhysics(false);
 	SetRootComponent(m_Mesh);
 }
 
@@ -20,34 +22,82 @@ void ABall::BeginPlay()
 {
 	Super::BeginPlay();
 
-	m_Mesh->OnComponentHit.AddDynamic(this, &ABall::OnHit);
-
 	m_Mesh->OnComponentBeginOverlap.AddDynamic(this, &ABall::OnOverlap);
 }
 
-void ABall::OnHit(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit)
+void ABall::OnOverlap(UPrimitiveComponent* overlappedComp, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult)
 {
 	if (otherActor->ActorHasTag(TEXT("Horizontal")))
 	{
 		m_TravelDir.Y *= -1.0f;
 	}
 
-	if (otherActor->ActorHasTag(TEXT("Vertical")))
+	if (otherActor->ActorHasTag(TEXT("LEFT")))
 	{
-		m_TravelDir.X *= -1.0f;
+		m_TravelDir.X = 1.0f;
+		m_SpeedModifier = FMath::Min(1.5f, m_SpeedModifier + 0.1f);
+	}
+
+	if (otherActor->ActorHasTag(TEXT("RIGHT")))
+	{
+		m_TravelDir.X = -1.0f;
+		m_SpeedModifier = FMath::Min(1.5f, m_SpeedModifier + 0.1f);
+	}
+
+	if (otherActor->ActorHasTag(TEXT("LEFTWIN")))
+	{
+		ScoreLeft();
+	}
+
+	if (otherActor->ActorHasTag(TEXT("RIGHTWIN")))
+	{
+		ScoreRight();
 	}
 }
 
-void ABall::OnOverlap(UPrimitiveComponent* overlappedComp, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult)
+void ABall::ScoreLeft()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("SCORE!"));
+	APongGameState* GameState = GetWorld()->GetGameState<APongGameState>();
+	if (GameState)
+	{
+		GameState->ScoreLeft();
+	}
+	m_TravelDir.X = 1.0f;
+
+	ResetBall();
 }
 
-// Called every frame
+void ABall::ScoreRight()
+{
+	APongGameState* GameState = GetWorld()->GetGameState<APongGameState>();
+	if (GameState)
+	{
+		GameState->ScoreRight();
+	}
+	m_TravelDir.X = -1.0f;
+
+	ResetBall();
+}
+
+void ABall::ResetBall()
+{
+	SetActorTickEnabled(false);
+	m_Mesh->SetWorldLocation(FVector::ZeroVector, false, nullptr, ETeleportType::TeleportPhysics);
+	m_SpeedModifier = 1.0f;
+
+	FTimerHandle Handle;
+	GetWorld()->GetTimerManager().SetTimer(Handle, this, &ABall::StartBall, m_ResetTime, false);
+}
+
+void ABall::StartBall()
+{
+	SetActorTickEnabled(true);
+}
+
 void ABall::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	SetActorLocation(GetActorLocation() + m_TravelDir * m_TravelSpeed);
+	m_Mesh->AddRelativeLocation(m_TravelDir * m_TravelSpeed * m_SpeedModifier, true, nullptr, ETeleportType::TeleportPhysics);
 }
 

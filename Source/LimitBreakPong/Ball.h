@@ -25,20 +25,32 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit);
-
-	UFUNCTION()
 	void OnOverlap(UPrimitiveComponent* overlappedComp, AActor* otherActor, UPrimitiveComponent* otherComp, int32 otherBodyIndex, bool bFromSweep, const FHitResult& sweepResult);
 
+	UFUNCTION()
+	void StartBall();
+
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+	void ResetBall();
+
+	void ScoreLeft();
+
+	void ScoreRight();
+
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* m_Mesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Parameter, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Parameter, meta = (AllowPrivateAccess = "true"))
 	float m_TravelSpeed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Parameter, meta = (AllowPrivateAccess = "true"))
+	float m_ResetTime;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Parameter, meta = (AllowPrivateAccess = "true"))
 	FVector m_TravelDir = FVector(1.0f, 1.0f, 0.0f);
 
+private:
+	float m_SpeedModifier = 1.0f;
 };
